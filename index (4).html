@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>CyberChat</title>
+<style>
+:root{
+  --bg:#07090d;--panel:#10141c;--panel2:#151a24;--line:#1f2733;
+  --fg:#d6dde8;--dim:#6d7a8a;--accent:#4f46e5;--accent2:#7c5cff;
+  --ok:#3ddc84;--err:#ff4d6d;--warn:#ffb84d;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+body{background:
+  radial-gradient(1200px 600px at 20% -10%,rgba(79,70,229,.10),transparent 60%),
+  radial-gradient(900px 500px at 90% 110%,rgba(124,92,255,.10),transparent 60%),
+  var(--bg)}
+.app{display:flex;flex-direction:column;height:100vh;height:100dvh;max-width:1000px;margin:0 auto}
+header{display:flex;align-items:center;gap:14px;padding:14px 20px;
+  border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(16,20,28,.9),rgba(16,20,28,.6));
+  backdrop-filter:blur(8px);z-index:5}
+.logo{width:38px;height:38px;border-radius:10px;flex:0 0 auto;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 20px rgba(79,70,229,.4);
+  font-weight:900;color:#fff;font-size:20px;font-family:"Consolas",monospace}
+.title{font-size:17px;font-weight:700;letter-spacing:1px}
+.title .tag{color:#a5b4fc}
+.status{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--dim);margin-top:2px}
+.dot{width:8px;height:8px;border-radius:50%;background:#4f46e5;box-shadow:0 0 8px #4f46e5;animation:pulse 2s infinite}
+.dot.err{background:var(--err);box-shadow:0 0 8px var(--err)}
+@keyframes pulse{50%{opacity:.5}}
+.hbtns{margin-left:auto;display:flex;gap:6px}
+.hbtn{background:var(--panel2);border:1px solid var(--line);color:var(--dim);
+  width:36px;height:36px;border-radius:10px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .15s}
+.hbtn:hover{color:#a5b4fc;border-color:var(--accent);box-shadow:0 0 12px rgba(79,70,229,.25)}
+main{flex:1;overflow-y:auto;padding:24px 20px 12px;scroll-behavior:smooth;
+  display:flex;flex-direction:column;gap:14px}
+main::-webkit-scrollbar{width:8px}
+main::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+main::-webkit-scrollbar-track{background:transparent}
+.msg{display:flex;gap:12px;max-width:82%;animation:in .25s ease}
+@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.msg.user{align-self:flex-end;flex-direction:row-reverse}
+.msg .avatar{width:34px;height:34px;flex:0 0 auto;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:"Consolas",monospace;font-weight:700;font-size:14px}
+.msg.ai .avatar{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+.msg.user .avatar{background:linear-gradient(135deg,#1a3a5f,#0a2030);color:#a0c8ff}
+.bubble{background:var(--panel);border:1px solid var(--line);
+  padding:12px 16px;border-radius:14px;font-size:14.5px;
+  line-height:1.55;word-wrap:break-word;white-space:pre-wrap}
+.msg.user .bubble{background:linear-gradient(180deg,#0f1f34,#0a1527);
+  border-color:#1a3a5f;color:#dff0ff}
+.bubble code{background:#000;padding:2px 6px;border-radius:5px;
+  font-family:"Consolas",monospace;font-size:13px;color:#a5b4fc}
+.bubble pre{background:#000;border:1px solid var(--line);padding:12px;
+  border-radius:8px;overflow-x:auto;margin:8px 0;
+  font-family:"Consolas",monospace;font-size:12.5px;line-height:1.5}
+.bubble strong{color:#fff}
+.bubble em{color:var(--dim)}
+.time{font-size:10px;color:var(--dim);margin-top:6px;opacity:.7}
+.cursor::after{content:"▊";color:#a5b4fc;animation:blink 1s infinite;margin-left:2px}
+@keyframes blink{50%{opacity:0}}
+.typing .bubble{display:flex;gap:5px;align-items:center;padding:14px 18px}
+.typing .d{width:7px;height:7px;border-radius:50%;background:#a5b4fc;animation:bounce 1.2s infinite}
+.typing .d:nth-child(2){animation-delay:.15s}
+.typing .d:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,60%,100%{transform:none;opacity:.4}30%{transform:translateY(-5px);opacity:1}}
+.welcome{text-align:center;padding:40px 20px;color:var(--dim);
+  display:flex;flex-direction:column;align-items:center;gap:14px}
+.welcome h2{margin:0;font-size:32px;letter-spacing:2px;font-weight:300;
+  background:linear-gradient(135deg,#a5b4fc,#7c5cff);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.welcome .sub{font-size:13px;max-width:580px;line-height:1.7}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:8px}
+.chip{background:var(--panel);border:1px solid var(--line);color:var(--fg);
+  padding:8px 14px;border-radius:20px;font-size:12.5px;cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--accent);color:#a5b4fc;box-shadow:0 0 12px rgba(79,70,229,.2)}
+footer{padding:14px 20px 20px;border-top:1px solid var(--line);
+  background:linear-gradient(0deg,rgba(16,20,28,.95),rgba(16,20,28,.7));backdrop-filter:blur(8px)}
+.inputWrap{display:flex;gap:10px;align-items:flex-end;background:var(--panel);
+  border:1px solid var(--line);border-radius:16px;padding:8px 8px 8px 16px;transition:border-color .15s}
+.inputWrap:focus-within{border-color:var(--accent);box-shadow:0 0 20px rgba(79,70,229,.15)}
+#input{flex:1;background:transparent;border:0;color:var(--fg);font:inherit;
+  font-size:14.5px;resize:none;outline:none;max-height:180px;min-height:24px;padding:8px 0;line-height:1.5}
+#input::placeholder{color:var(--dim)}
+#send{width:40px;height:40px;border-radius:12px;flex:0 0 auto;border:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#fff;cursor:pointer;font-weight:900;font-size:16px;
+  display:flex;align-items:center;justify-content:center;transition:transform .1s,box-shadow .15s}
+#send:hover{box-shadow:0 0 20px rgba(79,70,229,.5)}
+#send:active{transform:scale(.92)}
+#send:disabled{opacity:.35;cursor:not-allowed}
+.meta{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);padding:6px 4px 0}
+.meta .hint kbd{background:var(--panel2);border:1px solid var(--line);
+  border-radius:4px;padding:1px 5px;font-family:monospace;font-size:10px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:100;display:none;
+  align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);overflow-y:auto}
+.overlay.on{display:flex}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:16px;
+  width:100%;max-width:560px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.6);margin:auto}
+.modal h3{margin:0 0 4px;font-size:16px;letter-spacing:1px}
+.modal .desc{font-size:12px;color:var(--dim);margin-bottom:20px;line-height:1.6}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:12px;color:var(--dim);margin-bottom:6px;letter-spacing:.5px}
+.field input,.field select{width:100%;background:var(--bg);border:1px solid var(--line);
+  color:var(--fg);padding:10px 12px;border-radius:8px;font:inherit;font-size:13px;
+  outline:none;font-family:"Consolas",monospace}
+.field input:focus,.field select:focus{border-color:var(--accent)}
+.field .note{font-size:11px;color:var(--dim);margin-top:6px;line-height:1.5}
+.field .note a{color:#a5b4fc;text-decoration:none}
+.field .note a:hover{text-decoration:underline}
+.providerNote{background:rgba(79,70,229,.1);border:1px solid rgba(79,70,229,.3);
+  border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.6;margin-bottom:16px;color:#c8d0e0}
+.providerNote b{color:#a5b4fc}
+.providerNote a{color:#a5b4fc}
+.row{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+.btn{padding:10px 18px;border-radius:8px;border:1px solid var(--line);
+  background:var(--panel2);color:var(--fg);cursor:pointer;font:inherit;font-size:13px;transition:all .15s}
+.btn:hover{border-color:var(--accent);color:#a5b4fc}
+.btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:0;font-weight:700}
+.btn.primary:hover{box-shadow:0 0 16px rgba(79,70,229,.5);color:#fff}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:var(--panel2);border:1px solid var(--line);color:var(--fg);
+  padding:10px 18px;border-radius:10px;font-size:13px;z-index:200;
+  opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;text-align:center}
+.toast.on{opacity:1}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;
+  background:rgba(79,70,229,.2);border:1px solid rgba(79,70,229,.5);color:#a5b4fc;margin-left:6px}
+@media(max-width:600px){
+  .msg{max-width:92%}header{padding:12px 14px}main{padding:16px 14px 8px}
+  footer{padding:10px 14px 14px}.hbtn{width:32px;height:32px}.welcome h2{font-size:24px}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <div class="logo">C</div>
+    <div>
+      <div class="title">Cyber<span class="tag">Chat</span> <span class="badge" id="providerBadge">groq</span></div>
+      <div class="status">
+        <span class="dot" id="statusDot"></span>
+        <span id="statusText">loading…</span>
+      </div>
+    </div>
+    <div class="hbtns">
+      <button class="hbtn" id="btnExport" title="Export chat">↓</button>
+      <button class="hbtn" id="btnClear" title="Clear chat">✕</button>
+      <button class="hbtn" id="btnSettings" title="Settings">⚙</button>
+    </div>
+  </header>
+
+  <main id="messages"></main>
+
+  <footer>
+    <div class="inputWrap">
+      <textarea id="input" rows="1" placeholder="Ask anything… / Her şeyi sorabilirsin…"></textarea>
+      <button id="send" title="Send">↑</button>
+    </div>
+    <div class="meta">
+      <span class="hint"><kbd>Enter</kbd> send · <kbd>Shift</kbd>+<kbd>Enter</kbd> newline</span>
+      <span id="charCount">0</span>
+    </div>
+  </footer>
+</div>
+
+<div class="overlay" id="settings">
+  <div class="modal">
+    <h3>Settings</h3>
+    <div class="desc">Groq is pre-configured with a working key. You can change providers or paste a different key per-device if you want — the changes save locally.</div>
+
+    <div class="providerNote" id="providerNote"></div>
+
+    <div class="field">
+      <label>Provider</label>
+      <select id="providerSel">
+        <option value="groq">Groq — fastest, easiest (recommended)</option>
+        <option value="gemini">Google Gemini — generous free tier</option>
+        <option value="openrouter">OpenRouter — free DeepSeek / Llama</option>
+        <option value="cerebras">Cerebras — very fast</option>
+        <option value="custom">Custom OpenAI-compatible endpoint</option>
+      </select>
+    </div>
+
+    <div class="field" id="urlField">
+      <label>API endpoint</label>
+      <input id="apiUrl" type="text">
+    </div>
+
+    <div class="field" id="keyField">
+      <label>API key</label>
+      <input id="apiKey" type="text" placeholder="paste your key here">
+      <div class="note" id="keyNote"></div>
+    </div>
+
+    <div class="field" id="modelField">
+      <label>Model</label>
+      <input id="apiModel" type="text" list="modelList">
+      <datalist id="modelList"></datalist>
+      <div class="note" id="modelNote"></div>
+    </div>
+
+    <div class="field">
+      <label>Streaming</label>
+      <select id="streamSel">
+        <option value="on">On — tokens appear as they arrive</option>
+        <option value="off">Off — wait for the full response</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>System prompt</label>
+      <input id="sysPrompt" type="text">
+    </div>
+
+    <div class="row">
+      <button class="btn" id="btnCancel">Cancel</button>
+      <button class="btn" id="btnTest">Test</button>
+      <button class="btn primary" id="btnSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+// =============================================================
+// FREE PROVIDERS — all OpenAI-compatible, no credit card
+// =============================================================
+const PROVIDERS = {
+  groq: {
+    label: "Groq",
+    url: "https://api.groq.com/openai/v1/chat/completions",
+    defaultModel: "groq/compound",
+    models: [
+      "groq/compound",
+      "llama-3.3-70b-versatile",
+      "llama-3.1-8b-instant",
+      "llama-3.1-70b-versatile",
+      "mixtral-8x7b-32768",
+      "gemma2-9b-it"
+    ],
+    keyURL: "https://console.groq.com/keys",
+    note: "Free tier: ~30 requests/min, extremely fast inference. Sign up with Google — key appears in under a minute. No card.",
+    modelNote: "groq/compound is a tool-using agent model. llama-3.3-70b-versatile is the general-purpose alternative.",
+  },
+  gemini: {
+    label: "Google Gemini",
+    url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+    defaultModel: "gemini-2.0-flash-exp",
+    models: ["gemini-2.0-flash-exp", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro"],
+    keyURL: "https://aistudio.google.com/app/apikey",
+    note: "Free tier: 15 requests/min, 1M tokens/day on flash models. Get a key from Google AI Studio with your Google account.",
+    modelNote: "gemini-2.0-flash-exp is fast and free. gemini-1.5-pro is smartest but slower.",
+  },
+  openrouter: {
+    label: "OpenRouter",
+    url: "https://openrouter.ai/api/v1/chat/completions",
+    defaultModel: "deepseek/deepseek-chat-v3-0324:free",
+    models: [
+      "deepseek/deepseek-chat-v3-0324:free",
+      "deepseek/deepseek-r1:free",
+      "meta-llama/llama-3.3-70b-instruct:free",
+      "google/gemini-2.0-flash-exp:free",
+      "mistralai/mistral-7b-instruct:free",
+      "qwen/qwen-2.5-72b-instruct:free"
+    ],
+    keyURL: "https://openrouter.ai/keys",
+    note: "Free models end in <code>:free</code>. DeepSeek V3 is available free here. No credit card. Rate-limited but works.",
+    modelNote: "deepseek/deepseek-chat-v3-0324:free gives you DeepSeek free.",
+  },
+  cerebras: {
+    label: "Cerebras",
+    url: "https://api.cerebras.ai/v1/chat/completions",
+    defaultModel: "llama3.1-8b",
+    models: ["llama3.1-8b", "llama3.1-70b", "llama-3.3-70b"],
+    keyURL: "https://cloud.cerebras.ai",
+    note: "Free tier: very fast. Sign up and generate a key on the dashboard.",
+    modelNote: "llama3.1-8b is instant. 70b is smarter.",
+  },
+  custom: {
+    label: "Custom",
+    url: "",
+    defaultModel: "",
+    models: [],
+    keyURL: "",
+    note: "Point at any OpenAI-compatible endpoint.",
+    modelNote: "",
+  },
+};
+
+// ---------- Hardcoded defaults — every copy of this file ships ready ----------
+const HARDCODED_KEY    = "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";
+const HARDCODED_MODEL  = "groq/compound";
+const HARDCODED_PROMPT = "You are CyberChat, a bilingual (English/Turkish) assistant. Reply in the user's language. Refuse requests to build malware, RATs, or tools designed to harm other people.";
+
+const STORAGE_KEY  = "cyberchat.groq.v1";
+const SETTINGS_KEY = "cyberchat.groq.settings.v1";
+const MAX_STORED   = 200;
+
+// =============================================================
+// CLIENT-SIDE REFUSAL — runs before any network call
+// =============================================================
+const REFUSE_PATTERNS = [
+  /\b(rats?|remote\s+access\s+trojan|uzak\s+erişim\s+truva(sı)?)\b/i,
+  /\b(key\s*log(ger)?|tuş\s+kaydedici|klavye\s+dinleyici)\b/i,
+  /\b(stealer|info\s*stealer|credential\s+stealer|şifre\s+çal(an|ıcı))\b/i,
+  /\b(ransomware|fidye\s+yazılım(ı)?|cryptolocker)\b/i,
+  /\b(rootkit|bootkit|kök\s+kit)\b/i,
+  /\b(trojan|malware|virus|worm|spyware|adware|zararlı\s+yazılım|virüs|truva\s+atı|solucan|casus\s+yazılım)\b/i,
+  /\b(backdoor|arka\s+kapı|botnet|bot\s*net)\b/i,
+  /\b(c2\s*(server|panel)|command\s*(and|&)\s*control|komuta\s+kontrol)\b/i,
+  /\b(exploit\s*(kit|code)?|0day|zero[- ]day|payload|shellcode|sömürü\s+kodu)\b/i,
+  /\b(buffer\s*overflow|heap\s*spray|bellek\s+taşması)\b/i,
+  /\b(ddos|dos\s+attack|stresser|booter|hizmet\s+engelleme\s+saldırısı)\b/i,
+  /\b(phishing\s+(page|site|kit)|fake\s+login|oltalama\s+(sayfası|sitesi))\b/i,
+  /\b(crack|keygen|serial\s+generator|drm\s+bypass|kırma\s+aracı)\b/i,
+  /\b(password\s+crack|brute\s*force\s+(tool|attack)|şifre\s+kır(ma|ıcı))\b/i,
+  /\b(sql\s*injection|sqlmap|xss\s+payload)\b/i,
+  /\b(hack\s+(into|someone|a\s+computer|an?\s+account|wifi)|hesap\s+çal|bilgisayar\s+kır|wifi\s+kır)\b/i,
+  /\b(bypass\s+(antivirus|edr|defender)|antivirüs\s+atlat)\b/i,
+  /\b(privilege\s+escalation|yetki\s+yükseltme)\s+(exploit|kodu|payload)/i,
+  /\b(bomb|explosive|ied|patlayıcı|bomba\s+yap)\b/i,
+  /\b(pipe\s+bomb|molotov|napalm)\b/i,
+  /\b(poison\s+(someone|him|her)|assassinate|hitman|suikast|zehirle)\b/i,
+  /\b(meth|cocaine|heroin|fentanyl|fentanil|kokain|eroin|uyuşturucu\s+yap)\b/i,
+  /\b(cp|child\s+porn|csam|çocuk\s+pornosu|loli\s+porn)\b/i,
+];
+const SELF_HARM_PATTERN = /\b(kill\s+myself|suicide|suicid|self[- ]harm|cut\s+myself|intihar|kendimi\s+öldür|kendime\s+zarar)\b/i;
+const REFUSAL_EN = "I can't do that. I don't help build malware, RATs, or tools designed to harm other people.";
+const REFUSAL_TR = "Bunu yapamam. Zararlı yazılım, RAT veya başkalarına zarar vermek için tasarlanmış araçlar oluşturmaya yardımcı olmam.";
+const HELPLINE_EN = "I'm sorry you're feeling that way. Please talk to someone you trust, or reach out to a crisis line — in the US, 988 is available 24/7. You matter.";
+const HELPLINE_TR = "Böyle hissetmene üzüldüm. Lütfen güvendiğin biriyle konuş ya da bir kriz hattına ulaş. Türkiye'de 182 veya 112'yi arayabilirsin. Değerlisin.";
+
+function looksTurkish(text){
+  if (/[ıİşŞğĞ]/.test(text)) return true;
+  const tr = ["merhaba","selam","nasılsın","neden","nasıl","nerede","kim","teşekkür","lütfen","değil","yapamam"];
+  const l = text.toLowerCase();
+  return tr.some(w => l.includes(w));
+}
+
+// =============================================================
+// STATE
+// =============================================================
+const state = {
+  messages: [],
+  settings: {
+    provider: "groq",
+    keys: {},
+    models: {},
+    urls: {},
+    sysPrompt: HARDCODED_PROMPT,
+    streaming: true,
+  },
+  sending: false,
+};
+
+function getProvider(){ return PROVIDERS[state.settings.provider] || PROVIDERS.groq; }
+function getKey(){ return state.settings.keys[state.settings.provider] || ""; }
+function getModel(){ return state.settings.models[state.settings.provider] || getProvider().defaultModel; }
+function getUrl(){ return state.settings.provider === "custom"
+  ? (state.settings.urls.custom || "")
+  : getProvider().url; }
+
+function saveMessages(){ try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.messages.slice(-MAX_STORED))); } catch {} }
+function loadMessages(){ try { const r = localStorage.getItem(STORAGE_KEY); if (r) state.messages = JSON.parse(r) || []; } catch {} }
+function saveSettings(){ try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(state.settings)); } catch {} }
+function loadSettings(){
+  try {
+    const r = localStorage.getItem(SETTINGS_KEY);
+    if (r) Object.assign(state.settings, JSON.parse(r));
+  } catch {}
+  // seed hardcoded defaults on first run
+  if (!state.settings.keys.groq)   state.settings.keys.groq   = HARDCODED_KEY;
+  if (!state.settings.models.groq) state.settings.models.groq = HARDCODED_MODEL;
+  if (!state.settings.sysPrompt)   state.settings.sysPrompt   = HARDCODED_PROMPT;
+  if (!state.settings.provider)    state.settings.provider    = "groq";
+}
+
+// =============================================================
+// API CLIENT
+// =============================================================
+function buildMessages(userText){
+  return [
+    { role: "system", content: state.settings.sysPrompt || HARDCODED_PROMPT },
+    ...state.messages.slice(-20).map(m => ({
+      role: m.role === "ai" ? "assistant" : "user",
+      content: m.content,
+    })),
+    { role: "user", content: userText },
+  ];
+}
+
+function headersFor(key){
+  const h = {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer " + key,
+  };
+  if (state.settings.provider === "openrouter"){
+    h["HTTP-Referer"] = location.origin || "http://localhost";
+    h["X-Title"] = "CyberChat";
+  }
+  return h;
+}
+
+async function streamReply(userText, onToken){
+  const res = await fetch(getUrl(), {
+    method: "POST",
+    headers: headersFor(getKey()),
+    body: JSON.stringify({
+      model: getModel(),
+      messages: buildMessages(userText),
+      stream: true,
+      temperature: 0.7,
+    }),
+  });
+  if (!res.ok){
+    const txt = await res.text().catch(() => "");
+    let msg = "HTTP " + res.status;
+    try { const j = JSON.parse(txt); if (j.error?.message) msg += " — " + j.error.message; }
+    catch { if (txt) msg += " — " + txt.slice(0, 200); }
+    throw new Error(msg);
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let full = "";
+  while (true){
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
+    for (const line of lines){
+      const s = line.trim();
+      if (!s || !s.startsWith("data:")) continue;
+      const payload = s.slice(5).trim();
+      if (payload === "[DONE]") continue;
+      try {
+        const j = JSON.parse(payload);
+        const delta = j.choices?.[0]?.delta;
+        if (!delta) continue;
+        const piece = delta.content;
+        if (typeof piece === "string" && piece.length){
+          full += piece;
+          onToken && onToken(piece, full);
+        }
+      } catch {}
+    }
+  }
+  if (!full) throw new Error("Empty response");
+  return full;
+}
+
+async function callOnce(userText){
+  const res = await fetch(getUrl(), {
+    method: "POST",
+    headers: headersFor(getKey()),
+    body: JSON.stringify({
+      model: getModel(),
+      messages: buildMessages(userText),
+      stream: false,
+      temperature: 0.7,
+    }),
+  });
+  if (!res.ok){
+    const txt = await res.text().catch(() => "");
+    let msg = "HTTP " + res.status;
+    try { const j = JSON.parse(txt); if (j.error?.message) msg += " — " + j.error.message; }
+    catch { if (txt) msg += " — " + txt.slice(0, 200); }
+    throw new Error(msg);
+  }
+  const j = await res.json();
+  const content = j.choices?.[0]?.message?.content;
+  if (!content) throw new Error("Empty response");
+  return content;
+}
+
+// =============================================================
+// UI
+// =============================================================
+const $ = id => document.getElementById(id);
+const messagesEl = $("messages");
+const inputEl = $("input");
+const sendBtn = $("send");
+const charCountEl = $("charCount");
+
+function escapeHTML(s){
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+function renderContent(raw){
+  let s = escapeHTML(raw);
+  s = s.replace(/```([\s\S]*?)```/g, (_, c) => "<pre>" + c.replace(/^\n/, "") + "</pre>");
+  s = s.replace(/`([^`\n]+)`/g, "<code>$1</code>");
+  s = s.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+  s = s.replace(/\*([^*\n]+)\*/g, "<em>$1</em>");
+  return s;
+}
+function tsLabel(ts){
+  const d = new Date(ts);
+  return String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0");
+}
+
+function renderMessage(msg, animate){
+  const wrap = document.createElement("div");
+  wrap.className = "msg " + (msg.role === "ai" ? "ai" : "user");
+  if (animate === false) wrap.style.animation = "none";
+  wrap.innerHTML = `<div class="avatar">${msg.role === "ai" ? "C" : "Y"}</div>`;
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+  bubble.innerHTML = renderContent(msg.content) + `<div class="time">${tsLabel(msg.ts)}</div>`;
+  wrap.appendChild(bubble);
+  messagesEl.appendChild(wrap);
+  return { wrap, bubble };
+}
+function scrollBottom(){ messagesEl.scrollTop = messagesEl.scrollHeight; }
+
+function showTyping(){
+  const wrap = document.createElement("div");
+  wrap.className = "msg ai typing";
+  wrap.id = "__typing";
+  wrap.innerHTML = `<div class="avatar">C</div><div class="bubble"><span class="d"></span><span class="d"></span><span class="d"></span></div>`;
+  messagesEl.appendChild(wrap);
+  scrollBottom();
+}
+function hideTyping(){ const t = $("__typing"); if (t) t.remove(); }
+
+function renderAll(){
+  messagesEl.innerHTML = "";
+  if (!state.messages.length){ renderWelcome(); return; }
+  for (const m of state.messages) renderMessage(m, false);
+  scrollBottom();
+}
+
+function renderWelcome(){
+  const el = document.createElement("div");
+  el.className = "welcome";
+  el.innerHTML = `
+    <h2>CyberChat</h2>
+    <div class="sub">Powered by Groq. Bilingual — English &amp; Türkçe. Refuses requests to build malware. Type in either language and the model replies in kind.</div>
+    <div class="chips">
+      <div class="chip" data-prompt="What can you do?">What can you do?</div>
+      <div class="chip" data-prompt="Explain how DNS works">Explain how DNS works</div>
+      <div class="chip" data-prompt="Tell me a joke">Tell me a joke</div>
+      <div class="chip" data-prompt="Merhaba, nasılsın?">Merhaba, nasılsın?</div>
+      <div class="chip" data-prompt="İstanbul hakkında kısa bilgi ver">İstanbul hakkında kısa bilgi</div>
+      <div class="chip" data-prompt="Bana bir şaka anlat">Bana bir şaka anlat</div>
+    </div>
+  `;
+  messagesEl.appendChild(el);
+  el.querySelectorAll(".chip").forEach(c => c.addEventListener("click", () => {
+    inputEl.value = c.dataset.prompt;
+    inputEl.focus(); updateCharCount(); autoResize(); send();
+  }));
+}
+
+function updateCharCount(){ charCountEl.textContent = inputEl.value.length + " chars"; }
+function autoResize(){ inputEl.style.height = "auto"; inputEl.style.height = Math.min(inputEl.scrollHeight, 180) + "px"; }
+
+// =============================================================
+// SEND
+// =============================================================
+async function send(){
+  if (state.sending) return;
+  const text = inputEl.value.trim();
+  if (!text) return;
+
+  if (!getKey()){
+    toast("Add an API key first (⚙)");
+    openSettings();
+    return;
+  }
+
+  const welc = messagesEl.querySelector(".welcome");
+  if (welc) welc.remove();
+
+  const userMsg = { role: "user", content: text, ts: Date.now() };
+  state.messages.push(userMsg);
+  renderMessage(userMsg);
+  saveMessages();
+
+  inputEl.value = "";
+  updateCharCount();
+  autoResize();
+
+  state.sending = true;
+  sendBtn.disabled = true;
+
+  const turkish = looksTurkish(text);
+  let refusal = null;
+  for (const p of REFUSE_PATTERNS) if (p.test(text)){ refusal = turkish ? REFUSAL_TR : REFUSAL_EN; break; }
+  if (!refusal && SELF_HARM_PATTERN.test(text)) refusal = turkish ? HELPLINE_TR : HELPLINE_EN;
+
+  if (refusal){
+    await new Promise(r => setTimeout(r, 120));
+    appendAIMessage(refusal);
+    state.sending = false;
+    sendBtn.disabled = false;
+    inputEl.focus();
+    return;
+  }
+
+  if (state.settings.streaming){
+    showTyping();
+    let firstToken = true;
+    let liveBubble = null;
+    let liveText = "";
+    try {
+      await streamReply(text, (piece, full) => {
+        if (firstToken){
+          hideTyping();
+          const { bubble } = renderMessage({ role: "ai", content: "", ts: Date.now() }, false);
+          liveBubble = bubble;
+          liveBubble.classList.add("cursor");
+          firstToken = false;
+        }
+        liveText = full;
+        liveBubble.innerHTML = renderContent(liveText) + `<div class="time">${tsLabel(Date.now())}</div>`;
+        scrollBottom();
+      });
+      if (liveBubble) liveBubble.classList.remove("cursor");
+      const aiMsg = { role: "ai", content: liveText, ts: Date.now() };
+      state.messages.push(aiMsg);
+      saveMessages();
+    } catch (e){
+      hideTyping();
+      appendAIMessage("Error — " + e.message);
+    }
+  } else {
+    showTyping();
+    try {
+      const reply = await callOnce(text);
+      hideTyping();
+      appendAIMessage(reply);
+    } catch (e){
+      hideTyping();
+      appendAIMessage("Error — " + e.message);
+    }
+  }
+
+  state.sending = false;
+  sendBtn.disabled = false;
+  inputEl.focus();
+}
+
+function appendAIMessage(content){
+  const aiMsg = { role: "ai", content, ts: Date.now() };
+  state.messages.push(aiMsg);
+  renderMessage(aiMsg);
+  saveMessages();
+  scrollBottom();
+}
+
+// =============================================================
+// EVENTS
+// =============================================================
+sendBtn.addEventListener("click", send);
+inputEl.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey){ e.preventDefault(); send(); }
+});
+inputEl.addEventListener("input", () => { updateCharCount(); autoResize(); });
+
+$("btnClear").addEventListener("click", () => {
+  if (!state.messages.length) return;
+  if (confirm("Clear the conversation? / Sohbeti temizle?")){
+    state.messages = [];
+    saveMessages();
+    renderAll();
+    toast("Cleared / Temizlendi");
+  }
+});
+
+$("btnExport").addEventListener("click", () => {
+  if (!state.messages.length){ toast("Nothing to export"); return; }
+  const lines = state.messages.map(m =>
+    `[${new Date(m.ts).toLocaleString()}] ${m.role === "ai" ? "CyberChat" : "You"}:\n${m.content}\n`);
+  const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "cyberchat-" + new Date().toISOString().slice(0, 10) + ".txt";
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  toast("Exported");
+});
+
+// =============================================================
+// SETTINGS
+// =============================================================
+function refreshProviderFields(){
+  const name = $("providerSel").value;
+  const prov = PROVIDERS[name];
+
+  $("apiUrl").value = name === "custom" ? (state.settings.urls.custom || "") : prov.url;
+  $("apiKey").value = state.settings.keys[name] || "";
+  $("apiModel").value = state.settings.models[name] || prov.defaultModel || "";
+
+  const dl = $("modelList");
+  dl.innerHTML = "";
+  for (const m of prov.models || []){
+    const opt = document.createElement("option");
+    opt.value = m;
+    dl.appendChild(opt);
+  }
+
+  const note = $("providerNote");
+  if (prov.note){
+    note.innerHTML = `<b>${prov.label}:</b> ${prov.note}` +
+      (prov.keyURL ? ` <a href="${prov.keyURL}" target="_blank" rel="noopener">Get a free key →</a>` : "");
+    note.style.display = "";
+  } else {
+    note.style.display = "none";
+  }
+
+  $("keyNote").innerHTML = prov.keyURL
+    ? `Stored in this browser only. Get a key at <a href="${prov.keyURL}" target="_blank" rel="noopener">${prov.keyURL.replace(/^https?:\/\//, "")}</a>.`
+    : "Stored in this browser only.";
+
+  $("modelNote").textContent = prov.modelNote || "";
+
+  $("urlField").style.display = name === "custom" ? "" : "none";
+}
+
+function openSettings(){
+  $("providerSel").value = state.settings.provider;
+  $("streamSel").value = state.settings.streaming ? "on" : "off";
+  $("sysPrompt").value = state.settings.sysPrompt || HARDCODED_PROMPT;
+  refreshProviderFields();
+  $("settings").classList.add("on");
+}
+function closeSettings(){ $("settings").classList.remove("on"); }
+
+$("providerSel").addEventListener("change", () => {
+  const prev = state.settings.provider;
+  state.settings.keys[prev] = $("apiKey").value.trim();
+  state.settings.models[prev] = $("apiModel").value.trim();
+  if (prev === "custom") state.settings.urls.custom = $("apiUrl").value.trim();
+  state.settings.provider = $("providerSel").value;
+  refreshProviderFields();
+});
+
+$("btnSettings").addEventListener("click", openSettings);
+$("btnCancel").addEventListener("click", closeSettings);
+$("settings").addEventListener("click", e => { if (e.target === $("settings")) closeSettings(); });
+
+$("btnSave").addEventListener("click", () => {
+  const prov = $("providerSel").value;
+  state.settings.provider = prov;
+  state.settings.keys[prov] = $("apiKey").value.trim();
+  state.settings.models[prov] = $("apiModel").value.trim() || PROVIDERS[prov].defaultModel || "";
+  if (prov === "custom") state.settings.urls.custom = $("apiUrl").value.trim();
+  state.settings.streaming = $("streamSel").value === "on";
+  state.settings.sysPrompt = $("sysPrompt").value.trim() || HARDCODED_PROMPT;
+  saveSettings();
+  updateStatusIndicator();
+  closeSettings();
+  toast("Saved / Kaydedildi");
+});
+
+$("btnTest").addEventListener("click", async () => {
+  const prov = $("providerSel").value;
+  const preset = PROVIDERS[prov];
+  const url = prov === "custom" ? $("apiUrl").value.trim() : preset.url;
+  const key = $("apiKey").value.trim();
+  const model = $("apiModel").value.trim() || preset.defaultModel;
+  if (!url || !key){ toast("URL and key required"); return; }
+  toast("Testing…");
+  try {
+    const headers = {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + key,
+    };
+    if (prov === "openrouter"){
+      headers["HTTP-Referer"] = location.origin || "http://localhost";
+      headers["X-Title"] = "CyberChat";
+    }
+    const res = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        model,
+        messages: [{ role: "user", content: "ping" }],
+        max_tokens: 4,
+        stream: false,
+      }),
+    });
+    if (!res.ok){
+      const t = await res.text().catch(() => "");
+      let detail = "HTTP " + res.status;
+      try { const j = JSON.parse(t); if (j.error?.message) detail += " — " + j.error.message; } catch {}
+      toast("Failed: " + detail);
+    } else {
+      toast("✓ Connected to " + (preset.label || prov));
+    }
+  } catch (e){
+    toast("Failed: " + e.message.slice(0, 80));
+  }
+});
+
+function maskKey(k){
+  if (!k) return "no key";
+  if (k.length < 12) return k;
+  return k.slice(0, 6) + "…" + k.slice(-4);
+}
+
+function updateStatusIndicator(){
+  const dot = $("statusDot");
+  const text = $("statusText");
+  const badge = $("providerBadge");
+  const prov = state.settings.provider;
+  const key = getKey();
+  const preset = PROVIDERS[prov];
+
+  badge.textContent = prov;
+
+  if (!key){
+    dot.classList.add("err");
+    text.textContent = "add an api key (⚙)";
+    return;
+  }
+  dot.classList.remove("err");
+  text.textContent = (preset.label || prov) + " · " + (getModel() || "model") + " · " + maskKey(key);
+}
+
+let toastTimer = 0;
+function toast(msg){
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("on");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("on"), 2400);
+}
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && $("settings").classList.contains("on")) closeSettings();
+  if ((e.ctrlKey || e.metaKey) && e.key === "k"){ e.preventDefault(); inputEl.focus(); }
+});
+
+// =============================================================
+// BOOT
+// =============================================================
+loadSettings();
+loadMessages();
+updateStatusIndicator();
+renderAll();
+autoResize();
+inputEl.focus();
+</script>
+</body>
+</html>
